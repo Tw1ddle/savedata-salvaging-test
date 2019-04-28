@@ -1,6 +1,5 @@
 package config;
 
-import extension.mobileprefs.MobilePrefs;
 import flixel.util.FlxSave;
 
 class SaveData {

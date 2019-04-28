@@ -1,101 +1,128 @@
 package states;
 
+import config.SaveData;
 import extension.mobileprefs.MobilePrefs;
 import extension.mobileprefs.SaveDataSalvager;
 import flixel.FlxG;
 import flixel.FlxState;
 import flixel.text.FlxText;
 import flixel.ui.FlxButton;
-import openfl.net.SharedObject;
 import lime.system.System;
-
+import openfl.net.SharedObject;
 import sys.FileSystem;
+import sys.io.File;
 
+@:access(openfl.net.SharedObject)
 class RootState extends FlxState
 {
 	private var text:FlxText = new FlxText(0, 20);
 	
 	private var createOldSavedataButton:FlxButton;
 	private var printOldSavedataButton:FlxButton;
-	private var resetOldSavedataToDefaultsButton:FlxButton;
+	private var clearOldSavedataToDefaultsButton:FlxButton;
 	
-	private var createNewSavedataButton:FlxButton;
+	private var loadNewSavedataButton:FlxButton;
+	private var deleteNewSavedataButton:FlxButton;
 	private var salvageOldSavedataButton:FlxButton;
 	private var printNewSavedataButton:FlxButton;
-	private var deleteNewSavedataButton:FlxButton;
 	private var flushNewSavedataButton:FlxButton;
 	
-	private var listStorageDirectoryButton:FlxButton;
+	private var listStorageDirectoriesButton:FlxButton;
 	
 	override public function create():Void {
 		super.create();
 		
+		// Commit a copy-paste of a .sol file from an old desktop build of Werewolf Tycoon
+		// to the old preferences
 		createOldSavedataButton = new FlxButton(0, 0, "Create Old Save", function() {
-			appendMessage("Creating fake old savedata...");
-			
-			var highestNight = "8999";
-			var highestKills = "9001";
-			
-			MobilePrefs.setUserPreference("highestNightReached", highestNight);
-			MobilePrefs.setUserPreference("highestKillsReached", highestKills);
-			
-			appendMessage("Highest night = " + MobilePrefs.getUserPreference("highestNightReached"));
-			appendMessage("Highest kills = " + MobilePrefs.getUserPreference("highestKillsReached"));
+			appendMessage("Creating an old-style savedata file...");
+			MobilePrefs.setUserPreference(SaveData.saveFileName,
+			"oy19:highestKillsReachedzy27:shouldShowTitleRateUsButtonfy18:currentSaveVersioni1y10:stepsTakeni1y10:totalKillszy25:timesManuallyHiddenInBushi16y19:hasShownLamppostTipty23:gamesPlayedThisSaveFilei3y16:ratingPaperShownfy19:highestNightReachedi1g");
 		});
 		
+		// Print out the old savedata, if any
 		printOldSavedataButton = new FlxButton(0, 0, "Print Old Save", function() {
 			appendMessage("Printing out old savedata...");
-			appendMessage("Highest night = " + MobilePrefs.getUserPreference("highestNightReached"));
-			appendMessage("Highest kills = " + MobilePrefs.getUserPreference("highestKillsReached"));
+			appendMessage(MobilePrefs.getUserPreference(SaveData.saveFileName));
 		});
 		
-		resetOldSavedataToDefaultsButton = new FlxButton(0, 0, "Reset Old Save", function() {
+		// Clears the old savedata to an empty string
+		clearOldSavedataToDefaultsButton = new FlxButton(0, 0, "Reset Old Save", function() {
 			appendMessage("Resetting old savedata to default values...");
-			MobilePrefs.clearUserPreference("highestNightReached");
-			MobilePrefs.clearUserPreference("highestKillsReached");
+			MobilePrefs.clearUserPreference(SaveData.saveFileName);
 		});
 		
+		// Run the old savedata salvager, which will copy the sol data out from preferences to
+		// an external .sol file in the application storage directory if possible
 		salvageOldSavedataButton = new FlxButton(0, 0, "Salvage Old Save", function() {
-			appendMessage("Salvaging old savedata, writing it to new file + deleting old file");
-			var result = SaveDataSalvager.salvageSaveData("saveone");
+			appendMessage("Salvaging old savedata, writing it to new file");
+			
+			var result = SaveDataSalvager.salvageSaveData(SaveData.saveFileName);
 			appendMessage("Salvaging result: " + Std.string(result));
 		});
 		
-		createNewSavedataButton = new FlxButton(0, 0, "Create New Save", function() {
-			appendMessage("Creating new savedata...");
-			Main.saveData.initSaveData(true);
+		// Loads (or sets up defaults + flushes) new .sol file savedata
+		loadNewSavedataButton = new FlxButton(0, 0, "Load New Save", function() {
+			appendMessage("Loading new savedata...");
+			
+			Main.saveData.initSaveData(false);
 		});
 		
+		// Deletes the new .sol file savedata
+		deleteNewSavedataButton = new FlxButton(0, 0, "Delete New Save", function() {
+			appendMessage("Deleting new savedata...");
+			
+			try {
+				FileSystem.deleteFile(System.applicationStorageDirectory + "/" + SaveData.saveFileName + ".sol");
+				appendMessage("Deleted new savedata");
+				return;
+			} catch (e:Dynamic) {
+				appendMessage("Failed to delete new savedata, did it actually exist: " + e);
+			}
+		});
+		
+		// Prints the new .sol file savedata, if any
 		printNewSavedataButton = new FlxButton(0, 0, "Print New Save", function() {
 			appendMessage("Printing out new savedata...");
-			appendMessage("Highest night = " + Main.saveData.highestNight);
-			appendMessage("Highest kills = " + Main.saveData.highestScore);
+			
+			try {
+				appendMessage("Whole file: " + File.getContent(SharedObject.__getPath("", SaveData.saveFileName)));
+			} catch (e:Dynamic) {
+				appendMessage("Failed to print whole new savedata file contents: " + e);
+			}
+			
+			try {
+				appendMessage("Highest night = " + Main.saveData.highestNight);
+				appendMessage("Highest kills = " + Main.saveData.highestScore);
+			} catch (e:Dynamic) {
+				appendMessage("Failed to print night and/or kills fields of new savedata: " + e);
+			}
 		});
 		
-		deleteNewSavedataButton = new FlxButton(0, 0, "Clear New Save", function() {
-			appendMessage("Deleting new savedata...");
-			FileSystem.deleteFile(System.applicationStorageDirectory + "/" + "saveone.sol");
-		});
-		
+		// Flushes the new .sol file savedata from memory to disk
 		flushNewSavedataButton = new FlxButton(0, 0, "Flush New Save", function() {
 			appendMessage("Flushing new savedata...");
+			
 			Main.saveData.flush();
 		});
 		
-		listStorageDirectoryButton = new FlxButton(0, 0, "List Storage Dir", function() {
-			appendMessage("Listing storage dir contents at : " + System.applicationStorageDirectory);
-			var files = FileSystem.readDirectory(System.applicationStorageDirectory);
-			for (file in files) {
+		// Lists the contents of the application storage directory (expect the new .sol file to go here e.g. saveone.sol)
+		listStorageDirectoriesButton = new FlxButton(0, 0, "List Storage Dirs", function() {
+			appendMessage("Listing contents at app storage dir: " + System.applicationStorageDirectory);
+			
+			var newFiles = FileSystem.readDirectory(System.applicationStorageDirectory);
+			for (file in newFiles) {
 				appendMessage(file);
 			}
 		});
 		
 		add(text);
 		
+		// Add the buttons to the bottom of the screen
 		var i = 1;
 		var x = 0;
-		for (button in [createOldSavedataButton, printOldSavedataButton, resetOldSavedataToDefaultsButton, salvageOldSavedataButton, createNewSavedataButton, printNewSavedataButton, deleteNewSavedataButton, flushNewSavedataButton, listStorageDirectoryButton]) {
-			x += 20;
+		for (button in [createOldSavedataButton, printOldSavedataButton, clearOldSavedataToDefaultsButton, salvageOldSavedataButton, loadNewSavedataButton, deleteNewSavedataButton, printNewSavedataButton, flushNewSavedataButton, listStorageDirectoriesButton]) {
+			x += 5;
 			i++;
 			
 			button.x = x;

@@ -66,10 +66,6 @@ class Main extends Sprite {
 		FlxG.scaleMode = new RatioScaleMode();
 		FlxG.fixedTimestep = false;
 		
-		// NOTE this has to be set up as early as possible to avoid access-before-init bugs
-		// However it has to be after the FlxGame object has been created because FlxSave and other Flixel stuff
-		// may be accessing FlxG and other global objects!
 		Main.saveData = new SaveData();
-		Main.saveData.initSaveData(false);
 	}
 }
