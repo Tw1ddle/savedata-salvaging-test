@@ -6,20 +6,26 @@ import flixel.FlxG;
 import flixel.FlxState;
 import flixel.text.FlxText;
 import flixel.ui.FlxButton;
+import openfl.net.SharedObject;
+import lime.system.System;
+
+import sys.FileSystem;
 
 class RootState extends FlxState
 {
 	private var text:FlxText = new FlxText(0, 20);
 	
 	private var createOldSavedataButton:FlxButton;
-	
 	private var printOldSavedataButton:FlxButton;
-	private var clearOldSavedataButton:FlxButton;
+	private var resetOldSavedataToDefaultsButton:FlxButton;
 	
+	private var createNewSavedataButton:FlxButton;
 	private var salvageOldSavedataButton:FlxButton;
 	private var printNewSavedataButton:FlxButton;
-	private var clearNewSavedataButton:FlxButton;
+	private var deleteNewSavedataButton:FlxButton;
 	private var flushNewSavedataButton:FlxButton;
+	
+	private var listStorageDirectoryButton:FlxButton;
 	
 	override public function create():Void {
 		super.create();
@@ -43,8 +49,8 @@ class RootState extends FlxState
 			appendMessage("Highest kills = " + MobilePrefs.getUserPreference("highestKillsReached"));
 		});
 		
-		clearOldSavedataButton = new FlxButton(0, 0, "Clear Old Save", function() {
-			appendMessage("Clearing old savedata...");
+		resetOldSavedataToDefaultsButton = new FlxButton(0, 0, "Reset Old Save", function() {
+			appendMessage("Resetting old savedata to default values...");
 			MobilePrefs.clearUserPreference("highestNightReached");
 			MobilePrefs.clearUserPreference("highestKillsReached");
 		});
@@ -55,15 +61,20 @@ class RootState extends FlxState
 			appendMessage("Salvaging result: " + Std.string(result));
 		});
 		
+		createNewSavedataButton = new FlxButton(0, 0, "Create New Save", function() {
+			appendMessage("Creating new savedata...");
+			Main.saveData.initSaveData(true);
+		});
+		
 		printNewSavedataButton = new FlxButton(0, 0, "Print New Save", function() {
 			appendMessage("Printing out new savedata...");
 			appendMessage("Highest night = " + Main.saveData.highestNight);
 			appendMessage("Highest kills = " + Main.saveData.highestScore);
 		});
 		
-		clearNewSavedataButton = new FlxButton(0, 0, "Clear New Save", function() {
-			appendMessage("Clearing out new savedata...");
-			Main.saveData.initSaveData(true);
+		deleteNewSavedataButton = new FlxButton(0, 0, "Clear New Save", function() {
+			appendMessage("Deleting new savedata...");
+			FileSystem.deleteFile(System.applicationStorageDirectory + "/" + "saveone.sol");
 		});
 		
 		flushNewSavedataButton = new FlxButton(0, 0, "Flush New Save", function() {
@@ -71,11 +82,19 @@ class RootState extends FlxState
 			Main.saveData.flush();
 		});
 		
+		listStorageDirectoryButton = new FlxButton(0, 0, "List Storage Dir", function() {
+			appendMessage("Listing storage dir contents at : " + System.applicationStorageDirectory);
+			var files = FileSystem.readDirectory(System.applicationStorageDirectory);
+			for (file in files) {
+				appendMessage(file);
+			}
+		});
+		
 		add(text);
 		
 		var i = 1;
 		var x = 0;
-		for (button in [createOldSavedataButton, printOldSavedataButton, clearOldSavedataButton, salvageOldSavedataButton, printNewSavedataButton, clearNewSavedataButton, flushNewSavedataButton]) {
+		for (button in [createOldSavedataButton, printOldSavedataButton, resetOldSavedataToDefaultsButton, salvageOldSavedataButton, createNewSavedataButton, printNewSavedataButton, deleteNewSavedataButton, flushNewSavedataButton, listStorageDirectoryButton]) {
 			x += 20;
 			i++;
 			
