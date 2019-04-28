@@ -1,13 +1,11 @@
 package states;
 
+import extension.mobileprefs.MobilePrefs;
+import extension.mobileprefs.SaveDataSalvager;
+import flixel.FlxG;
 import flixel.FlxState;
 import flixel.text.FlxText;
 import flixel.ui.FlxButton;
-import extension.mobileprefs.MobilePrefs;
-import extension.mobileprefs.SaveDataSalvager;
-import extension.mobileprefs.SaveDataSalvagingResult;
-import config.SaveData;
-import flixel.FlxG;
 
 class RootState extends FlxState
 {
@@ -32,56 +30,58 @@ class RootState extends FlxState
 			var highestNight = "8999";
 			var highestKills = "9001";
 			
-			appendMessage("Highest night = " + MobilePrefs.getUserPreference(highestNight));
-			appendMessage("Highest kills = " + MobilePrefs.getUserPreference(highestKills));
-			
 			MobilePrefs.setUserPreference("highestNightReached", highestNight);
 			MobilePrefs.setUserPreference("highestKillsReached", highestKills);
-		});
-		
-		printOldSavedataButton = new FlxButton(0, 0, "Print Old Save", function() {
-			appendMessage("Printing out old savedata...");
 			
 			appendMessage("Highest night = " + MobilePrefs.getUserPreference("highestNightReached"));
 			appendMessage("Highest kills = " + MobilePrefs.getUserPreference("highestKillsReached"));
 		});
+		
+		printOldSavedataButton = new FlxButton(0, 0, "Print Old Save", function() {
+			appendMessage("Printing out old savedata...");
+			appendMessage("Highest night = " + MobilePrefs.getUserPreference("highestNightReached"));
+			appendMessage("Highest kills = " + MobilePrefs.getUserPreference("highestKillsReached"));
+		});
+		
 		clearOldSavedataButton = new FlxButton(0, 0, "Clear Old Save", function() {
 			appendMessage("Clearing old savedata...");
-			
 			MobilePrefs.clearUserPreference("highestNightReached");
 			MobilePrefs.clearUserPreference("highestKillsReached");
 		});
 		
 		salvageOldSavedataButton = new FlxButton(0, 0, "Salvage Old Save", function() {
 			appendMessage("Salvaging old savedata, writing it to new file + deleting old file");
-			
 			var result = SaveDataSalvager.salvageSaveData("saveone");
 			appendMessage("Salvaging result: " + Std.string(result));
 		});
 		
 		printNewSavedataButton = new FlxButton(0, 0, "Print New Save", function() {
 			appendMessage("Printing out new savedata...");
-			
 			appendMessage("Highest night = " + Main.saveData.highestNight);
 			appendMessage("Highest kills = " + Main.saveData.highestScore);
 		});
+		
 		clearNewSavedataButton = new FlxButton(0, 0, "Clear New Save", function() {
 			appendMessage("Clearing out new savedata...");
-			
 			Main.saveData.initSaveData(true);
 		});
+		
 		flushNewSavedataButton = new FlxButton(0, 0, "Flush New Save", function() {
 			appendMessage("Flushing new savedata...");
-			
 			Main.saveData.flush();
 		});
 		
 		add(text);
 		
 		var i = 1;
+		var x = 0;
 		for (button in [createOldSavedataButton, printOldSavedataButton, clearOldSavedataButton, salvageOldSavedataButton, printNewSavedataButton, clearNewSavedataButton, flushNewSavedataButton]) {
-			button.x = i * 80 + button.width;
+			x += 20;
 			i++;
+			
+			button.x = x;
+			x += Std.int(button.width);
+			
 			button.y = FlxG.height * 0.8;
 			add(button);
 		}
